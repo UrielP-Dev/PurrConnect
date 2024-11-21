@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { Pressable, Text, View, Image } from 'react-native';
+import {Pressable, Text, View, Image, TouchableOpacity} from 'react-native';
 import React from 'react';
 
 const InitialScreen = ({ navigation }) => {    return (
@@ -15,10 +15,10 @@ const InitialScreen = ({ navigation }) => {    return (
                 source={require('../assets/PurrLogo.png')}
             />
 
-            <Pressable className="justify-center items-center bg-brownie rounded-full w-2/6 h-16 mb-8"
+            <TouchableOpacity className="justify-center items-center bg-brownie rounded-full w-2/6 h-16 mb-8  shadow-sm"
                        onPress={() => navigation.navigate('LoginScreen')}>
                 <Text className="text-white font-bold text-4xl">Login</Text>
-            </Pressable>
+            </TouchableOpacity>
             <StatusBar style="auto" />
             <Pressable>
                 <Text className="text-black font-semibold text-xl underline">

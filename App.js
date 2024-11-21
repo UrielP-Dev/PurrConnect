@@ -20,7 +20,7 @@ export default function App() {
                 <Stack.Screen
                     name="LoginScreen"
                     component={LoginScreen}
-                    options={{ title: 'LoginScreen' }}
+                    options={{ title: 'LoginScreen', headerShown: false }}
                 />
             </Stack.Navigator>
         </NavigationContainer>
