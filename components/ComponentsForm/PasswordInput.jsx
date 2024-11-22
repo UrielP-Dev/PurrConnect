@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
+import ErrorMessage from './ErrorMessage';
 
-const PasswordInput = () => {
+const PasswordInput = ({ value, onChangeText, error }) => {
     const [showPassword, setShowPassword] = useState(false);
 
     return (
@@ -14,6 +15,8 @@ const PasswordInput = () => {
                     placeholder="••••••••"
                     placeholderTextColor="#C1A3A3"
                     secureTextEntry={!showPassword}
+                    value={value}
+                    onChangeText={onChangeText}
                 />
                 <TouchableOpacity
                     className="absolute right-4 top-3"
@@ -26,6 +29,7 @@ const PasswordInput = () => {
                     )}
                 </TouchableOpacity>
             </View>
+            <ErrorMessage message={error} />
         </View>
     );
 };
