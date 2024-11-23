@@ -1,15 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pressable, Text, View, ScrollView, Image } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import CommunityCard from "../components/ComponentsHomePage/CommunityCard";
+import { getDocs, collection } from "firebase/firestore";
+import { db } from "../Utils/Firebase";
 
 const HomePage = () => {
+    const [communityCount, setCommunityCount] = useState(0);
     const navigation = useNavigation();
+
+    const fetchCommunityCount = async () => {
+        try {
+            const querySnapshot = await getDocs(collection(db, "Communitys"));
+            setCommunityCount(querySnapshot.size);
+        } catch (error) {
+            console.error("Error al obtener el número de comunidades: ", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchCommunityCount();
+    }, []);
 
     return (
         <View className="flex-1 bg-main">
-            <View className="bg-white px-4 py-8 flex-row items-center justify-between shadow-xl">
+            {/* Header */}
+            <View className="bg-white px-4 py-8 flex-row items-center justify-between shadow-2xl">
                 <View className="flex-row items-center mt-4">
                     <Pressable
                         onPress={() => navigation.openDrawer()}
@@ -29,32 +46,33 @@ const HomePage = () => {
                         <MaterialIcons name="search" size={24} color="#694E4E" />
                     </Pressable>
 
-                    <Pressable className="flex-row items-center bg-brownie px-3 py-1 rounded-full">
+                    <Pressable className="flex-row items-center bg-brownie px-3 py-1 rounded-full" >
                         <MaterialIcons name="add" size={20} color="#FFFFFF" />
                         <Text className="text-white text-sm ml-1">
                             Create
                         </Text>
                     </Pressable>
 
-                    {/* Profile Button */}
                     <Pressable>
                         <MaterialIcons name="account-circle" size={24} color="#694E4E" />
                     </Pressable>
                 </View>
             </View>
+
+            {/* Content */}
             <ScrollView className="flex-1">
-                <View className="flex-1 px-6 py-12">
-                    <View className="flex-row flex-wrap justify-between gap-y-4">
-                        <CommunityCard className="w-[60%] mb-4" />
-                        <CommunityCard className="w-[48%] mb-4" />
-                        <CommunityCard className="w-[48%] mb-4" />
-                        <CommunityCard className="w-[48%] mb-4" />
-                        <CommunityCard className="w-[48%] mb-4" />
-                        <CommunityCard className="w-[48%] mb-4" />
-                    </View>
+                {/* Communities Counter */}
+                <View className="px-4 py-3 flex-row items-center">
+                    <MaterialIcons name="group" size={24} color="#694E4E" />
+                    <Text className="text-brownie font-medium ml-2">
+                        {communityCount} Communities Available
+                    </Text>
+                </View>
+
+                <View className="flex-1">
+                    <CommunityCard />
                 </View>
             </ScrollView>
-
         </View>
     );
 };
