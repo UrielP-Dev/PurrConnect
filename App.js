@@ -39,13 +39,13 @@ function TabNavigator() {
                 }}
             />
             <Tab.Screen
-                name="Favorites"
+                name="My Communities"
                 component={HomePage} // Reemplazar con FavoritesPage cuando exista
                 options={{
                     tabBarIcon: ({ color, size }) => (
                         <MaterialIcons name="favorite" color={color} size={size} />
                     ),
-                    tabBarLabel: 'Favoritos'
+                    tabBarLabel: 'My Communities'
                 }}
             />
             <Tab.Screen
@@ -55,7 +55,7 @@ function TabNavigator() {
                     tabBarIcon: ({ color, size }) => (
                         <MaterialIcons name="message" color={color} size={size} />
                     ),
-                    tabBarLabel: 'Mensajes'
+                    tabBarLabel: 'Chat'
                 }}
             />
             <Tab.Screen

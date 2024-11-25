@@ -18,7 +18,7 @@ const CommunityCard = ({ community, isJoined, onJoinPress }) => {
                     </View>
                 </View>
             </View>
-            <Text className="text-tertiary text-sm mb-3" numberOfLines={2}>
+            <Text className="text-tertiary text-sm mb-3" numberOfLines={3}>
                 {community.description || "Community description."}
             </Text>
             <View className="flex-row justify-between pt-3 border-t border-secondary/20">
