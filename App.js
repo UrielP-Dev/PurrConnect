@@ -8,6 +8,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import InitialScreen from './screens/InitialScreen';
 import LoginScreen from './screens/LoginScreen';
 import HomePage from './screens/HomePage';
+import CommunityInfo from "./screens/HomePage/CommunityInfo";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -122,6 +123,12 @@ export default function App() {
                     component={AppDrawer}
                     options={{ headerShown: false }}
                 />
+                <Stack.Screen
+                    name="CommunityInfo"
+                    component={CommunityInfo}
+                    options={{ headerShown: false }}
+                />
+
             </Stack.Navigator>
         </NavigationContainer>
     );

@@ -19,11 +19,8 @@ const HomePage = () => {
                 id: doc.id,
                 ...doc.data()
             }));
-            const uniqueCommunities = Array.from(
-                new Map(communityList.map(item => [item.id, item])).values()
-            );
-            setCommunityCount(uniqueCommunities.length);
-            setCommunities(uniqueCommunities);
+            setCommunityCount(communityList.length);
+            setCommunities(communityList);
         } catch (error) {
             console.error("Error fetching communities: ", error);
         }
@@ -43,11 +40,17 @@ const HomePage = () => {
         );
     };
 
+    const handleCommunityPress = (community) => {
+        navigation.navigate('CommunityInfo', { communityId: community.id, name: community.name });
+        console.log(community);
+    };
+
     const renderCommunityCard = ({ item }) => (
         <CommunityCard
             community={item}
             isJoined={item.isJoined || false}
             onJoinPress={() => handleJoinPress(item.id)}
+            onPress={() => handleCommunityPress(item)}
         />
     );
 
