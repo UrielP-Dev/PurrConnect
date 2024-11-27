@@ -5,6 +5,7 @@ export default function CreateCommunityScreen() {
   return (
     <View>
       <Text>CreateCommunityScreen</Text>
+      <Text>CreateCommunityScree2n</Text>
     </View>
   )
 }
