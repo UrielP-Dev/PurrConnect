@@ -9,6 +9,7 @@ import InitialScreen from './screens/InitialScreen';
 import LoginScreen from './screens/LoginScreen';
 import HomePage from './screens/HomePage';
 import CommunityInfo from "./screens/HomePage/CommunityInfo";
+import CreatePost from "./screens/HomePage/CreatePost";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -127,6 +128,11 @@ export default function App() {
                     name="CommunityInfo"
                     component={CommunityInfo}
                     options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="CreatePost"
+                    component={CreatePost}
+                    options={{ headerShown: true }}
                 />
 
             </Stack.Navigator>

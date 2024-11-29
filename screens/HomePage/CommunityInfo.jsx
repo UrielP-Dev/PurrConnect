@@ -3,16 +3,18 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-nativ
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../Utils/Firebase';
+import { useNavigation } from '@react-navigation/native';
 
 const CommunityInfo = ({ route }) => {
     const { communityId, name } = route.params;
+    // Función para obtener los posts desde Firebase
 
+    const navigation = useNavigation();
     const [posts, setPosts] = useState([]);
     const [postCount, setPostCount] = useState(0);
     const [newPostTitle, setNewPostTitle] = useState('');
     const [newPostDescription, setNewPostDescription] = useState('');
 
-    // Función para obtener los posts desde Firebase
     const fetchPosts = async () => {
         try {
             const postsQuery = query(
@@ -33,6 +35,10 @@ const CommunityInfo = ({ route }) => {
             console.error("Error fetching posts: ", error);
         }
     };
+
+    const HandleCreatePostPress = () => {
+        navigation.navigate('CreatePost');
+    }
 
     useEffect(() => {
         fetchPosts();
@@ -81,21 +87,14 @@ const CommunityInfo = ({ route }) => {
             {/* Post Creation Area */}
             <View className="bg-main/20 rounded-lg p-4 mb-4">
                 <TextInput
-                    placeholder="Post Title"
-                    value={newPostTitle}
-                    onChangeText={setNewPostTitle}
-                    className="bg-white rounded-md p-2 mb-2 text-brownie border border-secondary/30"
-                />
-                <TextInput
                     placeholder="What's on your mind?"
                     value={newPostDescription}
-                    onChangeText={setNewPostDescription}
                     multiline
-                    className="bg-white rounded-md p-2 mb-2 min-h-[80px] text-brownie border border-secondary/30"
+                    className="bg-white rounded-full p-4 mb-2 min-h-[60px] text-brownie border border-secondary/30"
                 />
                 <TouchableOpacity
-                    onPress={handleAddPost}
-                    className="bg-tertiary p-2 rounded-md items-center"
+                    onPress={HandleCreatePostPress}
+                    className="bg-tertiary p-2 rounded-full items-center"
                 >
                     <Text className="text-white font-bold">Publish</Text>
                 </TouchableOpacity>

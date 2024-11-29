@@ -5,7 +5,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CommunityCard from "../components/ComponentsHomePage/CommunityCard";
 import { getDocs, collection } from "firebase/firestore";
 import { db } from "../Utils/Firebase";
-import Header from '../components/ComponentsHomePage/Header';  // Importamos el componente Header
+import Header from '../components/ComponentsHomePage/Header';
 
 const HomePage = () => {
     const [communityCount, setCommunityCount] = useState(0);
