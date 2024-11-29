@@ -1,29 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { View, ScrollView, TouchableOpacity, Text } from 'react-native';
+import CommunityHeader from '../../components/ComponentsCommunityInfo/CommunityHeader';
+import PostCreation from '../../components/ComponentsCommunityInfo/PostCreation';
+import PostsList from '../../components/ComponentsCommunityInfo/PostsList';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../../Utils/Firebase';
 import { useNavigation } from '@react-navigation/native';
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 const CommunityInfo = ({ route }) => {
     const { communityId, name } = route.params;
-    // Función para obtener los posts desde Firebase
-
-    const navigation = useNavigation();
     const [posts, setPosts] = useState([]);
     const [postCount, setPostCount] = useState(0);
-    const [newPostTitle, setNewPostTitle] = useState('');
-    const [newPostDescription, setNewPostDescription] = useState('');
+
+    const navigation = useNavigation();
 
     const fetchPosts = async () => {
         try {
             const postsQuery = query(
                 collection(db, "Posts"),
-                where("CommunityID", "==", communityId) // Filtrar por el ID de la comunidad
+                where("CommunityID", "==", communityId),
             );
-
             const querySnapshot = await getDocs(postsQuery);
-
             const fetchedPosts = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -36,117 +34,56 @@ const CommunityInfo = ({ route }) => {
         }
     };
 
-    const HandleCreatePostPress = () => {
-        navigation.navigate('CreatePost');
-    }
+
+    const handleNavigateToCreatePost = () => {
+        navigation.navigate('CreatePost', { communityId, name });
+    };
 
     useEffect(() => {
         fetchPosts();
     }, [communityId]);
 
-    const handleLike = (postId) => {
-        setPosts(prevPosts =>
-            prevPosts.map(post =>
-                post.id === postId
-                    ? { ...post, likes: (post.likes || 0) + 1 }
-                    : post
-            )
-        );
-    };
-
-    const handleAddPost = () => {
-        if (!newPostTitle.trim() || !newPostDescription.trim()) return;
-
-        const newPost = {
-            id: `${posts.length + 1}`,
-            Title: newPostTitle,
-            Description: newPostDescription,
-            likes: 0,
-            comments: []
-        };
-
-        setPosts(prevPosts => [newPost, ...prevPosts]);
-        setPostCount(prevCount => prevCount + 1);
-        setNewPostTitle('');
-        setNewPostDescription('');
-    };
-
     return (
-        <ScrollView
-            className="flex-1 bg-main"
-            contentContainerStyle={{ padding: 16 }}
-        >
-            {/* Community Header */}
-            <View className="mb-4">
-                <Text className="text-2xl font-bold text-brownie">{name}</Text>
-                <Text className="text-lg text-secondary">
-                    {postCount} {postCount === 1 ? "Post" : "Posts"}
-                </Text>
-            </View>
-
-            {/* Post Creation Area */}
-            <View className="bg-main/20 rounded-lg p-4 mb-4">
-                <TextInput
-                    placeholder="What's on your mind?"
-                    value={newPostDescription}
-                    multiline
-                    className="bg-white rounded-full p-4 mb-2 min-h-[60px] text-brownie border border-secondary/30"
-                />
+        <View className="flex-1 bg-main">
+            {/* Enhanced Header with Back Button */}
+            <View className="bg-white px-4 py-4 flex-row items-center shadow-sm">
                 <TouchableOpacity
-                    onPress={HandleCreatePostPress}
-                    className="bg-tertiary p-2 rounded-full items-center"
+                    onPress={() => navigation.goBack()}
+                    className="mr-4"
                 >
-                    <Text className="text-white font-bold">Publish</Text>
+                    <MaterialIcons name="arrow-back" size={24} color="#694E4E" />
                 </TouchableOpacity>
+
+                <View className="flex-1">
+                    <Text className="text-brownie text-xl font-bold">{name}</Text>
+                    <Text className="text-secondary text-sm">
+                        {postCount} Posts
+                    </Text>
+                </View>
             </View>
 
-            {/* Posts List */}
-            {posts.map(post => (
-                <View
-                    key={post.id}
-                    className="bg-white rounded-lg p-4 mb-4 shadow-md"
-                >
-                    <Text className="text-lg font-bold text-brownie mb-2">
-                        {post.Title}
-                    </Text>
-                    <Text className="text-secondary mb-4">
-                        {post.Description}
-                    </Text>
-
-                    {/* Interaction Area */}
-                    <View className="flex-row items-center space-x-4 gap-8 ">
-                        <TouchableOpacity
-                            onPress={() => handleLike(post.id)}
-                            className="flex-row items-center"
-                        >
-                            <MaterialIcons
-                                name="favorite"
-                                size={24}
-                                color="#694E4E"
-                                style={{
-                                    color: "#694E4E",
-                                    opacity: post.likes > 0 ? 1 : 0.5
-                                }}
-                            />
-                            <Text className="ml-1 text-brownie">
-                                {post.likes || 0}
-                            </Text>
-                        </TouchableOpacity>
-
-                        <View className="flex-row items-center">
-                            <MaterialIcons
-                                name="comment"
-                                size={24}
-                                color="#694E4E"
-                            />
-                            <Text className="ml-1 text-brownie">
-                                {post.comments?.length || 0}
-                            </Text>
-                        </View>
-                    </View>
+            <ScrollView>
+                {/* Post Creation Section with Enhanced Visual Separation */}
+                <View className="bg-white mx-4 my-4 rounded-2xl shadow-lg">
+                    <PostCreation onNavigate={handleNavigateToCreatePost} />
                 </View>
-            ))}
-        </ScrollView>
+
+                {/* Stylized Divider */}
+                <View className="flex-row justify-center items-center mb-3 px-4">
+                    <View className="flex-1 h-[1px] bg-secondary/30"></View>
+                    <Text className="mx-2 text-secondary text-xs">Recent Posts</Text>
+                    <View className="flex-1 h-[1px] bg-secondary/30"></View>
+                </View>
+
+                {/* Posts List */}
+                <View className="px-4">
+                    <PostsList
+                        posts={posts}
+                        onLike={postId => console.log('Liked:', postId)}
+                    />
+                </View>
+            </ScrollView>
+        </View>
     );
 };
 

@@ -10,6 +10,7 @@ import LoginScreen from './screens/LoginScreen';
 import HomePage from './screens/HomePage';
 import CommunityInfo from "./screens/HomePage/CommunityInfo";
 import CreatePost from "./screens/HomePage/CreatePost";
+import { UserProvider } from './Context/UserContext';
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -104,38 +105,38 @@ function AppDrawer() {
     );
 }
 
-// Root Navigator
 export default function App() {
     return (
-        <NavigationContainer>
-            <Stack.Navigator initialRouteName="Initial">
-                <Stack.Screen
-                    name="Initial"
-                    component={InitialScreen}
-                    options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                    name="LoginScreen"
-                    component={LoginScreen}
-                    options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                    name="HomePage"
-                    component={AppDrawer}
-                    options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                    name="CommunityInfo"
-                    component={CommunityInfo}
-                    options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                    name="CreatePost"
-                    component={CreatePost}
-                    options={{ headerShown: true }}
-                />
-
-            </Stack.Navigator>
-        </NavigationContainer>
+        <UserProvider>
+            <NavigationContainer>
+                <Stack.Navigator initialRouteName="Initial">
+                    <Stack.Screen
+                        name="Initial"
+                        component={InitialScreen}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="LoginScreen"
+                        component={LoginScreen}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="HomePage"
+                        component={AppDrawer}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="CommunityInfo"
+                        component={CommunityInfo}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="CreatePost"
+                        component={CreatePost}
+                        options={{ headerShown: false }}
+                    />
+                </Stack.Navigator>
+            </NavigationContainer>
+        </UserProvider>
     );
 }
