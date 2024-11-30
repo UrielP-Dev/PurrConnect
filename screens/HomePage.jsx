@@ -1,19 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { Text, FlatList, View } from 'react-native';
+import React, {useState, useEffect, useContext} from 'react';
+import { Text, FlatList, View, ToastAndroid, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CommunityCard from "../components/ComponentsHomePage/CommunityCard";
-import { getDocs, collection } from "firebase/firestore";
+import { getDocs, collection, doc, getDoc, updateDoc, arrayUnion, arrayRemove,setDoc } from "firebase/firestore";
 import { db } from "../Utils/Firebase";
 import Header from '../components/ComponentsHomePage/Header';
+import { UserContext } from '../Context/UserContext';
 
 const HomePage = () => {
     const [communityCount, setCommunityCount] = useState(0);
     const [communities, setCommunities] = useState([]);
+    const [userCommunities, setUserCommunities] = useState([]);
+    const [joinMessage, setJoinMessage] = useState("");
+    const [isLoading, setIsLoading] = useState({
+        communities: true,
+        userCommunities: true
+    });
     const navigation = useNavigation();
+    const { userId } = useContext(UserContext);
 
     const fetchCommunities = async () => {
         try {
+            setIsLoading(prev => ({...prev, communities: true}));
             const querySnapshot = await getDocs(collection(db, "Communitys"));
             const communityList = querySnapshot.docs.map(doc => ({
                 id: doc.id,
@@ -23,65 +32,130 @@ const HomePage = () => {
             setCommunities(communityList);
         } catch (error) {
             console.error("Error fetching communities: ", error);
+            ToastAndroid.show("Failed to load communities", ToastAndroid.SHORT);
+        } finally {
+            setIsLoading(prev => ({...prev, communities: false}));
+        }
+    };
+
+    const fetchUserCommunities = async () => {
+        const userCommunityRef = doc(db, "MyCommunities", userId);
+        try {
+            setIsLoading(prev => ({...prev, userCommunities: true}));
+            const userCommunityDoc = await getDoc(userCommunityRef);
+
+            if (userCommunityDoc.exists()) {
+                const userCommunitiesFromDB = userCommunityDoc.data().communityIds || [];
+                setUserCommunities(userCommunitiesFromDB);
+            } else {
+                setUserCommunities([]);
+            }
+        } catch (error) {
+            console.error("Error fetching user communities: ", error);
+            ToastAndroid.show("Failed to load user communities", ToastAndroid.SHORT);
+        } finally {
+            setIsLoading(prev => ({...prev, userCommunities: false}));
         }
     };
 
     useEffect(() => {
         fetchCommunities();
-    }, []);
+        fetchUserCommunities();
+    }, [userId]);
 
-    const handleJoinPress = (communityId) => {
-        setCommunities(prevCommunities =>
-            prevCommunities.map(community =>
-                community.id === communityId
-                    ? { ...community, isJoined: !community.isJoined }
-                    : community
-            )
-        );
+    const handleJoinPress = async (communityId) => {
+        const userCommunityRef = doc(db, "MyCommunities", userId);
+
+        try {
+            const userCommunityDoc = await getDoc(userCommunityRef);
+
+            if (userCommunityDoc.exists()) {
+                const userCommunitiesFromDB = userCommunityDoc.data().communityIds || [];
+                const isAlreadyJoined = userCommunitiesFromDB.includes(communityId);
+
+                if (isAlreadyJoined) {
+                    await updateDoc(userCommunityRef, {
+                        communityIds: arrayRemove(communityId),
+                    });
+                    ToastAndroid.show("You have left the community.", ToastAndroid.SHORT);
+                } else {
+                    await updateDoc(userCommunityRef, {
+                        communityIds: arrayUnion(communityId),
+                    });
+                    ToastAndroid.show("You have joined the community!", ToastAndroid.SHORT);
+                }
+
+                setUserCommunities((prev) =>
+                    isAlreadyJoined
+                        ? prev.filter((id) => id !== communityId)
+                        : [...prev, communityId]
+                );
+            } else {
+                await setDoc(userCommunityRef, {
+                    communityIds: [communityId],
+                });
+                ToastAndroid.show("You have joined the community!", ToastAndroid.SHORT);
+
+                setUserCommunities((prev) => [...prev, communityId]);
+            }
+        } catch (error) {
+            console.error("Error updating community membership: ", error);
+            ToastAndroid.show("Failed to update community membership", ToastAndroid.SHORT);
+        }
     };
 
     const handleCommunityPress = (community) => {
         navigation.navigate('CommunityInfo', { communityId: community.id, name: community.name });
-        console.log(community);
     };
 
     const renderCommunityCard = ({ item }) => (
         <CommunityCard
             community={item}
-            isJoined={item.isJoined || false}
-            onJoinPress={() => handleJoinPress(item.id)}
+            isJoined={userCommunities.includes(item.id)}
+            userId={userId}
             onPress={() => handleCommunityPress(item)}
+            onJoinPress={() => handleJoinPress(item.id)}
         />
+    );
+
+    // Loading indicator component
+    const LoadingIndicator = () => (
+        <View className="flex-1 justify-center items-center my-4">
+            <ActivityIndicator size="large" color="#694E4E" />
+            <Text className="text-brownie mt-2">Loading communities...</Text>
+        </View>
     );
 
     return (
         <View className="flex-1 bg-main">
-            {/* Header */}
             <Header navigation={navigation} />
 
-            {/* Content */}
-            <FlatList
-                data={communities}
-                keyExtractor={(item) => item.id}
-                renderItem={renderCommunityCard}
-                numColumns={2}
-                columnWrapperStyle={{
-                    justifyContent: 'space-between',
-                    marginBottom: 16,
-                }}
-                ListHeaderComponent={
-                    <View className="px-4 py-3 flex-row items-center mt-6">
-                        <MaterialIcons name="group" size={24} color="#694E4E" />
-                        <Text className="text-brownie font-medium ml-2">
-                            {communityCount} Communities Available
-                        </Text>
-                    </View>
-                }
-                contentContainerStyle={{
-                    paddingHorizontal: 12,
-                    paddingBottom: 16,
-                }}
-            />
+            {isLoading.communities ? (
+                <LoadingIndicator />
+            ) : (
+                <FlatList
+                    data={communities}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderCommunityCard}
+                    numColumns={2}
+                    columnWrapperStyle={{
+                        justifyContent: 'space-between',
+                        marginBottom: 16,
+                    }}
+                    ListHeaderComponent={
+                        <View className="px-4 py-3 flex-row items-center mt-6">
+                            <MaterialIcons name="group" size={24} color="#694E4E" />
+                            <Text className="text-brownie font-medium ml-2">
+                                {communityCount} Communities Available
+                            </Text>
+                        </View>
+                    }
+                    contentContainerStyle={{
+                        paddingHorizontal: 12,
+                        paddingBottom: 16,
+                    }}
+                />
+            )}
         </View>
     );
 };

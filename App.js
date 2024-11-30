@@ -11,6 +11,7 @@ import HomePage from './screens/HomePage';
 import CommunityInfo from "./screens/HomePage/CommunityInfo";
 import CreatePost from "./screens/HomePage/CreatePost";
 import { UserProvider } from './Context/UserContext';
+import MyCommunities from "./screens/HomePage/MyCommunites";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -43,7 +44,7 @@ function TabNavigator() {
             />
             <Tab.Screen
                 name="My Communities"
-                component={HomePage} // Reemplazar con FavoritesPage cuando exista
+                component={MyCommunities}
                 options={{
                     tabBarIcon: ({ color, size }) => (
                         <MaterialIcons name="favorite" color={color} size={size} />
@@ -135,6 +136,7 @@ export default function App() {
                         component={CreatePost}
                         options={{ headerShown: false }}
                     />
+
                 </Stack.Navigator>
             </NavigationContainer>
         </UserProvider>

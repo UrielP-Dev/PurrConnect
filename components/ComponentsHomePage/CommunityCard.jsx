@@ -2,11 +2,11 @@ import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
+
 const CommunityCard = ({ community, isJoined, onJoinPress, onPress }) => {
     return (
         <View className="bg-white border-2 border-secondary rounded-xl px-4 py-4 m-2 flex-1 shadow-2xl">
-            {/* Ahora solo envolvemos la parte clicable en un TouchableOpacity */}
-            <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+            <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
                 <View className="flex-row justify-between items-start mb-3">
                     <View className="flex-1">
                         <Text className="text-xl font-bold text-brownie mb-1" numberOfLines={1}>
