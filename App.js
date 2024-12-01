@@ -15,6 +15,7 @@ import MyCommunities from "./screens/HomePage/MyCommunites";
 
 import GroupChatDetailScreen from "./screens/HomePage/GroupChatDetailScreen";
 import ChatScreen from "./screens/HomePage/ChatScreen";
+import SignUpScreen from './screens/SignUpScreen';
 
 
 const Drawer = createDrawerNavigator();
@@ -144,6 +145,11 @@ export default function App() {
                         name="GroupChatDetail"
                         component={GroupChatDetailScreen}
                         options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name={"SignUpScreen"}
+                        component={SignUpScreen}
+                        options={{ title: 'SignUpScreen', headerShown: false }}
                     />
 
                 </Stack.Navigator>

@@ -20,11 +20,14 @@ const InitialScreen = ({ navigation }) => {    return (
                 <Text className="text-white font-bold text-4xl">Login</Text>
             </TouchableOpacity>
             <StatusBar style="auto" />
-            <Pressable>
-                <Text className="text-black font-semibold text-xl underline">
+            <TouchableOpacity>
+                <Text 
+                className="text-black font-semibold text-xl underline"
+                onPress={() => navigation.navigate('SignUpScreen')}
+                >
                     Don't have an account?
                 </Text>
-            </Pressable>
+            </TouchableOpacity>
         </LinearGradient>
     );
 };
