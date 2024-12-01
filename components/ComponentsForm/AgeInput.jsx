@@ -2,8 +2,9 @@ import { Button,View,Text, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import moment from 'moment';
+import ErrorMessage from './ErrorMessage';
 
-export default function AgeInput() {
+export default function AgeInput({setAge,error}) {
 
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     
@@ -21,6 +22,7 @@ export default function AgeInput() {
     // Formatear la fecha a dd/mm/yy usando date-fns
     const formattedDate = moment(date).format('DD/MM/YY');
   console.log(formattedDate);
+  setAge(formattedDate);
     hideDatePicker();
   };
 
@@ -29,10 +31,12 @@ export default function AgeInput() {
     
     >
       <TouchableOpacity 
-        className="justify-center items-center bg-brownie rounded-full w-28 h-16 mb-8  shadow-sm"
+        className="justify-center items-center bg-brownie rounded-full w-52 h-20 mb-8  shadow-sm"
         onPress={showDatePicker} >
-      <Text className="text-white font-bold text-3xl">Age</Text>
+      <Text className="text-white font-bold text-3xl">Date of Birth</Text>
+      <ErrorMessage message={error} />
       </TouchableOpacity>
+      
       
       <DateTimePickerModal
 
@@ -41,6 +45,7 @@ export default function AgeInput() {
         onConfirm={handleConfirm}
         onCancel={hideDatePicker}
       />
+      
     </View>
   )
 }
