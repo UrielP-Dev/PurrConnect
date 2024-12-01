@@ -129,7 +129,6 @@ export default function SignUpScreen({ navigation }) {
           error={errors.age}
           />
           
-
           <RegisterButton register={register} />
         </View>
       </ScrollView>
