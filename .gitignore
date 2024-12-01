@@ -8,7 +8,7 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
-
+Utils/Firebase.js
 # Native
 *.orig.*
 *.jks

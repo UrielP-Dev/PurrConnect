@@ -9,18 +9,21 @@ const LoginButton = ({ email, password, setErrors, onLoginSuccess }) => {
     const handleLogin = async () => {
         const newErrors = { email: '', password: '' };
 
+
         if (!email) newErrors.email = 'Email is required.';
         if (!password) newErrors.password = 'Password is required.';
 
         if (newErrors.email || newErrors.password) {
-            setErrors(newErrors); // Set errors in state
+            setErrors(newErrors);
             return;
         }
 
         setLoading(true);
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            onLoginSuccess();
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const userId = userCredential.user.uid;
+            onLoginSuccess(userId);
+            console.log(userId);
         } catch (error) {
             let errorMessage = { email: '', password: '' };
             switch (error.code) {
@@ -40,10 +43,9 @@ const LoginButton = ({ email, password, setErrors, onLoginSuccess }) => {
                     errorMessage.email = 'Network error. Please check your connection.';
                     break;
                 default:
-                    console.error(error); // Debugging
-                    break;
+                    console.error(error);
             }
-            setErrors(errorMessage); // Update errors in state
+            setErrors(errorMessage);
         } finally {
             setLoading(false);
         }
