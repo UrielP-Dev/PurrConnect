@@ -1,9 +1,9 @@
-import React, {useState, useEffect, useContext} from 'react';
-import { Text, FlatList, View, ToastAndroid, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { Text, FlatList, View, ToastAndroid, ActivityIndicator, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CommunityCard from "../components/ComponentsHomePage/CommunityCard";
-import { getDocs, collection, doc, getDoc, updateDoc, arrayUnion, arrayRemove,setDoc } from "firebase/firestore";
+import { getDocs, collection, doc, getDoc, updateDoc, arrayUnion, arrayRemove, setDoc } from "firebase/firestore";
 import { db } from "../Utils/Firebase";
 import Header from '../components/ComponentsHomePage/Header';
 import { UserContext } from '../Context/UserContext';
@@ -12,21 +12,22 @@ const HomePage = () => {
     const [communityCount, setCommunityCount] = useState(0);
     const [communities, setCommunities] = useState([]);
     const [userCommunities, setUserCommunities] = useState([]);
-    const [joinMessage, setJoinMessage] = useState("");
     const [isLoading, setIsLoading] = useState({
         communities: true,
-        userCommunities: true
+        userCommunities: true,
     });
+    const [isRefreshing, setIsRefreshing] = useState(false); // Estado para el refresh
     const navigation = useNavigation();
     const { userId } = useContext(UserContext);
 
+    // Función para obtener las comunidades
     const fetchCommunities = async () => {
         try {
-            setIsLoading(prev => ({...prev, communities: true}));
+            setIsLoading((prev) => ({ ...prev, communities: true }));
             const querySnapshot = await getDocs(collection(db, "Communitys"));
-            const communityList = querySnapshot.docs.map(doc => ({
+            const communityList = querySnapshot.docs.map((doc) => ({
                 id: doc.id,
-                ...doc.data()
+                ...doc.data(),
             }));
             setCommunityCount(communityList.length);
             setCommunities(communityList);
@@ -34,16 +35,16 @@ const HomePage = () => {
             console.error("Error fetching communities: ", error);
             ToastAndroid.show("Failed to load communities", ToastAndroid.SHORT);
         } finally {
-            setIsLoading(prev => ({...prev, communities: false}));
+            setIsLoading((prev) => ({ ...prev, communities: false }));
         }
     };
 
+    // Función para obtener las comunidades del usuario
     const fetchUserCommunities = async () => {
         const userCommunityRef = doc(db, "MyCommunities", userId);
         try {
-            setIsLoading(prev => ({...prev, userCommunities: true}));
+            setIsLoading((prev) => ({ ...prev, userCommunities: true }));
             const userCommunityDoc = await getDoc(userCommunityRef);
-
             if (userCommunityDoc.exists()) {
                 const userCommunitiesFromDB = userCommunityDoc.data().communityIds || [];
                 setUserCommunities(userCommunitiesFromDB);
@@ -54,10 +55,18 @@ const HomePage = () => {
             console.error("Error fetching user communities: ", error);
             ToastAndroid.show("Failed to load user communities", ToastAndroid.SHORT);
         } finally {
-            setIsLoading(prev => ({...prev, userCommunities: false}));
+            setIsLoading((prev) => ({ ...prev, userCommunities: false }));
         }
     };
 
+    // Función para actualizar al jalar hacia abajo
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await Promise.all([fetchCommunities(), fetchUserCommunities()]);
+        setIsRefreshing(false);
+    };
+
+    // Obtener datos al montar el componente
     useEffect(() => {
         fetchCommunities();
         fetchUserCommunities();
@@ -142,6 +151,12 @@ const HomePage = () => {
                         justifyContent: 'space-between',
                         marginBottom: 16,
                     }}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={isRefreshing}
+                            onRefresh={handleRefresh}
+                        />
+                    }
                     ListHeaderComponent={
                         <View className="px-4 py-3 flex-row items-center mt-6">
                             <MaterialIcons name="group" size={24} color="#694E4E" />

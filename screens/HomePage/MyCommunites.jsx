@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, ScrollView, Text, ActivityIndicator } from 'react-native';
+import { View, ScrollView, Text, ActivityIndicator, RefreshControl } from 'react-native';
 import { db } from '../../Utils/Firebase';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { UserContext } from '../../Context/UserContext';
@@ -12,6 +12,8 @@ const MyCommunities = () => {
     const [posts, setPosts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isEmpty, setIsEmpty] = useState(false);
+    const [error, setError] = useState(null);
+    const [refreshing, setRefreshing] = useState(false);
     const { userId } = useContext(UserContext);
     const navigation = useNavigation();
 
@@ -22,34 +24,44 @@ const MyCommunities = () => {
             return userDoc.exists() ? userDoc.data().communityIds || [] : [];
         } catch (error) {
             console.error("Error fetching user communities: ", error);
+            setError("Failed to load communities. Please try again.");
             return [];
         }
     };
 
     const fetchPosts = async () => {
         setIsLoading(true);
-        const communityIds = await fetchUserCommunities();
+        setError(null);
+        try {
+            const communityIds = await fetchUserCommunities();
 
-        if (communityIds.length > 0) {
-            const postsQuery = query(
-                collection(db, "Posts"),
-                where("CommunityID", "in", communityIds)
-            );
-            try {
+            if (communityIds.length > 0) {
+                const postsQuery = query(
+                    collection(db, "Posts"),
+                    where("CommunityID", "in", communityIds.slice(0, 10)) // Limitar a 10 IDs
+                );
                 const querySnapshot = await getDocs(postsQuery);
                 const fetchedPosts = querySnapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
+
                 setPosts(fetchedPosts);
                 setIsEmpty(fetchedPosts.length === 0);
-            } catch (error) {
-                console.error("Error fetching posts: ", error);
+            } else {
+                setIsEmpty(true);
             }
-        } else {
-            setIsEmpty(true);
+        } catch (error) {
+            console.error("Error fetching posts: ", error);
+            setError("Failed to load posts. Please try again.");
         }
         setIsLoading(false);
+    };
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchPosts();
+        setRefreshing(false);
     };
 
     useEffect(() => {
@@ -77,6 +89,10 @@ const MyCommunities = () => {
                     <ActivityIndicator size="large" color="#694E4E" />
                     <Text className="text-brownie mt-2">Loading posts...</Text>
                 </View>
+            ) : error ? (
+                <View className="flex-1 justify-center items-center">
+                    <Text className="text-red-500 text-lg">{error}</Text>
+                </View>
             ) : isEmpty ? (
                 <EmptyState />
             ) : (
@@ -85,6 +101,13 @@ const MyCommunities = () => {
                         padding: 16,
                         paddingBottom: 100
                     }}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            colors={['#694E4E']}
+                        />
+                    }
                     showsVerticalScrollIndicator={false}
                 >
                     {posts.map(post => (

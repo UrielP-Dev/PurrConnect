@@ -12,6 +12,10 @@ import CommunityInfo from "./screens/HomePage/CommunityInfo";
 import CreatePost from "./screens/HomePage/CreatePost";
 import { UserProvider } from './Context/UserContext';
 import MyCommunities from "./screens/HomePage/MyCommunites";
+import { mdiCat } from '@mdi/js';
+import Icon from '@mdi/react';
+import {ChatScreen} from "./screens/HomePage/ChatScreen";
+
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -54,22 +58,22 @@ function TabNavigator() {
             />
             <Tab.Screen
                 name="Messages"
-                component={HomePage} // Reemplazar con MessagesPage cuando exista
+                component={ChatScreen}
                 options={{
                     tabBarIcon: ({ color, size }) => (
-                        <MaterialIcons name="message" color={color} size={size} />
+                        <MaterialIcons name="forum" color={color} size={size} />
                     ),
                     tabBarLabel: 'Chat'
                 }}
             />
             <Tab.Screen
-                name="Notifications"
-                component={HomePage} // Reemplazar con NotificationsPage cuando exista
+                name="Profile"
+                component={HomePage}
                 options={{
                     tabBarIcon: ({ color, size }) => (
-                        <MaterialIcons name="notifications" color={color} size={size} />
+                        <MaterialIcons name="person" color={color} size={size} />
                     ),
-                    tabBarLabel: 'Alertas'
+                    tabBarLabel: 'Profile'
                 }}
             />
         </Tab.Navigator>
