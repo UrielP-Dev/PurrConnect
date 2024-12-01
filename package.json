@@ -11,6 +11,8 @@
   "dependencies": {
     "@mdi/js": "^7.4.47",
     "@mdi/react": "^1.6.1",
+    "@react-native-firebase/app": "^21.6.1",
+    "@react-native-firebase/firestore": "^21.6.1",
     "@react-native-google-signin/google-signin": "^13.1.0",
     "@react-native/gradle-plugin": "^0.76.3",
     "@react-navigation/bottom-tabs": "^7.0.7",

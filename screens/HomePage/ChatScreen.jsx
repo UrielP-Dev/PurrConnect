@@ -1,78 +1,141 @@
-import React, { useState, useContext } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, FlatList } from 'react-native';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { View, Text, TouchableOpacity, FlatList, TextInput, ToastAndroid, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Header from '../../components/ComponentsHomePage/Header';
 import { UserContext } from '../../Context/UserContext';
-
-// Dummy data for group chats
-const DUMMY_GROUP_CHATS = [
-    {
-        id: '1',
-        name: 'React Native Devs',
-        lastMessage: 'Hey, anyone up for a coding challenge?',
-        unreadCount: 2,
-        members: 24,
-        timestamp: '2h ago'
-    },
-    {
-        id: '2',
-        name: 'Design Community',
-        lastMessage: 'Check out this new UI concept!',
-        unreadCount: 1,
-        members: 15,
-        timestamp: '1d ago'
-    },
-    {
-        id: '3',
-        name: 'Startup Founders',
-        lastMessage: 'Funding round updates...',
-        unreadCount: 0,
-        members: 42,
-        timestamp: '3d ago'
-    }
-];
+import { getFirestore, doc, getDoc, collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const ChatScreen = () => {
     const navigation = useNavigation();
     const { userId } = useContext(UserContext);
+    const [chats, setChats] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [userCommunities, setUserCommunities] = useState([]);
+    const [isLoading, setIsLoading] = useState({
+        userCommunities: false,
+        chats: false,
+    });
+    const [refreshing, setRefreshing] = useState(false);
+    const [newMessage, setNewMessage] = useState('');
 
-    const filteredChats = DUMMY_GROUP_CHATS.filter(chat =>
+    const db = getFirestore();
+
+    // Fetch user communities
+    const fetchUserCommunities = async () => {
+        const userCommunityRef = doc(db, 'MyCommunities', userId);
+        try {
+            setIsLoading((prev) => ({ ...prev, userCommunities: true }));
+            const userCommunityDoc = await getDoc(userCommunityRef);
+            if (userCommunityDoc.exists()) {
+                const userCommunitiesFromDB = userCommunityDoc.data().communityIds || [];
+                setUserCommunities(userCommunitiesFromDB);
+            } else {
+                setUserCommunities([]);
+            }
+        } catch (error) {
+            console.error('Error fetching user communities: ', error);
+            ToastAndroid.show('Failed to load user communities', ToastAndroid.SHORT);
+        } finally {
+            setIsLoading((prev) => ({ ...prev, userCommunities: false }));
+        }
+    };
+
+    // Fetch chats from Communitys using community IDs
+    const fetchChats = async () => {
+        try {
+            if (userCommunities.length === 0) {
+                setChats([]);
+                return;
+            }
+
+            setIsLoading((prev) => ({ ...prev, chats: true }));
+            const chatsData = await Promise.all(
+                userCommunities.map(async (communityId) => {
+                    const communityDoc = await getDoc(doc(db, 'Communitys', communityId));
+                    if (communityDoc.exists()) {
+                        const communityData = communityDoc.data();
+                        return {
+                            id: communityId,
+                            name: communityData.name,
+                            description: communityData.description,
+                            participants: communityData.participants,
+                        };
+                    }
+                    return null;
+                })
+            );
+
+            setChats(chatsData.filter((chat) => chat !== null));
+        } catch (error) {
+            console.error('Error fetching chats: ', error);
+            ToastAndroid.show('Failed to load chats', ToastAndroid.SHORT);
+        } finally {
+            setIsLoading((prev) => ({ ...prev, chats: false }));
+        }
+    };
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchUserCommunities();
+        await fetchChats();
+        setRefreshing(false);
+    }, [userCommunities]);
+
+    useEffect(() => {
+        fetchUserCommunities();
+    }, [userId]);
+
+    useEffect(() => {
+        fetchChats();
+    }, [userCommunities]);
+
+    // Restore filteredChats function
+    const filteredChats = chats.filter((chat) =>
         chat.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const handleSendMessage = async (chatId) => {
+        if (!newMessage.trim()) {
+            ToastAndroid.show('Message cannot be empty', ToastAndroid.SHORT);
+            return;
+        }
+
+        try {
+            const chatRef = doc(db, 'CommunityChats', chatId);
+            const messagesRef = collection(chatRef, 'messages');
+            await addDoc(messagesRef, {
+                text: newMessage,
+                userId: userId,
+                timestamp: serverTimestamp(),
+            });
+
+            setNewMessage('');
+            ToastAndroid.show('Message sent successfully', ToastAndroid.SHORT);
+        } catch (error) {
+            console.error('Error sending message: ', error);
+            ToastAndroid.show('Failed to send message', ToastAndroid.SHORT);
+        }
+    };
+
     const GroupChatItem = ({ item }) => (
         <TouchableOpacity
-            onPress={() => navigation.navigate('GroupChatDetail', { chatId: item.id })}
-            className="bg-white rounded-xl p-4 mb-3 flex-row items-center shadow-sm"
+            onPress={() =>
+                navigation.navigate('GroupChatDetail', {
+                    chatId: item.id,
+                    chatName: item.name,
+                })
+            }
+            className="bg-white rounded-2xl p-4 mb-3 flex-row items-center shadow-md elevate-2"
         >
-            <View className="bg-secondary/20 p-3 rounded-full mr-3">
+            <View className="bg-secondary/10 p-3 rounded-full mr-3 w-12 h-12 items-center justify-center">
                 <MaterialIcons name="group" size={24} color="#694E4E" />
             </View>
             <View className="flex-1">
-                <View className="flex-row justify-between items-center">
-                    <Text className="text-brownie font-bold text-base">{item.name}</Text>
-                    <Text className="text-tertiary text-xs">{item.timestamp}</Text>
-                </View>
-                <View className="flex-row justify-between items-center mt-1">
-                    <Text
-                        className="text-tertiary text-sm flex-1 pr-2"
-                        numberOfLines={1}
-                    >
-                        {item.lastMessage}
-                    </Text>
-                    {item.unreadCount > 0 && (
-                        <View className="bg-secondary rounded-full w-5 h-5 justify-center items-center">
-                            <Text className="text-white text-xs">{item.unreadCount}</Text>
-                        </View>
-                    )}
-                </View>
-                <View className="flex-row items-center mt-1">
-                    <MaterialIcons name="people" size={16} color="#886F6F" />
-                    <Text className="text-tertiary text-xs ml-1">{item.members} members</Text>
-                </View>
+                <Text className="text-brownie font-bold text-base tracking-tight">{item.name}</Text>
+                <Text className="text-gray-600 text-sm mt-1">{item.participants} participants</Text>
             </View>
+            <MaterialIcons name="chevron-right" size={24} color="#694E4E" opacity={0.6} />
         </TouchableOpacity>
     );
 
@@ -80,35 +143,47 @@ const ChatScreen = () => {
         <View className="flex-1 bg-main">
             <Header navigation={navigation} />
 
+            {/* Search Bar */}
             <View className="px-4 py-3">
-                <View className="bg-white rounded-full flex-row items-center px-4 py-2 shadow-sm">
+                <View className="bg-white rounded-xl flex-row items-center px-4 py-3 shadow-md">
                     <MaterialIcons name="search" size={24} color="#694E4E" />
                     <TextInput
                         placeholder="Search group chats"
                         placeholderTextColor="#886F6F"
                         value={searchTerm}
                         onChangeText={setSearchTerm}
-                        className="flex-1 ml-2 text-brownie"
+                        className="flex-1 ml-3 text-brownie text-base"
                     />
                 </View>
             </View>
 
+            {/* Chat List */}
             <FlatList
                 data={filteredChats}
                 renderItem={GroupChatItem}
-                keyExtractor={item => item.id}
+                keyExtractor={(item) => item.id}
                 contentContainerStyle={{
                     paddingHorizontal: 16,
-                    paddingBottom: 20
+                    paddingBottom: 20,
                 }}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={['#694E4E']}
+                        tintColor="#694E4E"
+                    />
+                }
                 ListEmptyComponent={() => (
                     <View className="items-center justify-center mt-10">
-                        <MaterialIcons name="chat" size={64} color="#694E4E" />
-                        <Text className="text-brownie text-lg mt-4">
-                            No chats found
-                        </Text>
-                        <Text className="text-tertiary text-center mt-2">
-                            Join more communities to start chatting!
+                        <MaterialIcons
+                            name="chat"
+                            size={64}
+                            color="#694E4E"
+                            style={{ opacity: 0.5 }}
+                        />
+                        <Text className="text-brownie text-lg mt-4 text-center">
+                            {isLoading.chats ? 'Loading chats...' : 'No chats found'}
                         </Text>
                     </View>
                 )}
@@ -117,128 +192,4 @@ const ChatScreen = () => {
     );
 };
 
-// Group Chat Detail Screen
-const GroupChatDetailScreen = ({ route }) => {
-    const { chatId } = route.params;
-    const [message, setMessage] = useState('');
-    const [messages, setMessages] = useState([
-        {
-            id: '1',
-            user: 'John Doe',
-            text: 'Hey everyone, welcome to the chat!',
-            timestamp: '2h ago'
-        },
-        {
-            id: '2',
-            user: 'Jane Smith',
-            text: 'Great to be here!',
-            timestamp: '1h ago'
-        }
-    ]);
-
-    const sendMessage = () => {
-        if (message.trim()) {
-            setMessages([
-                ...messages,
-                {
-                    id: (messages.length + 1).toString(),
-                    user: 'You',
-                    text: message,
-                    timestamp: 'Just now'
-                }
-            ]);
-            setMessage('');
-        }
-    };
-
-    const MessageBubble = ({ item, isMe }) => (
-        <View className={`mb-3 ${isMe ? 'self-end' : 'self-start'}`}>
-            <View className={`
-                p-3 rounded-xl max-w-[80%]
-                ${isMe ? 'bg-secondary' : 'bg-white'}
-            `}>
-                {!isMe && (
-                    <Text className="text-brownie font-bold text-xs mb-1">
-                        {item.user}
-                    </Text>
-                )}
-                <Text className={`
-                    text-sm 
-                    ${isMe ? 'text-white' : 'text-brownie'}
-                `}>
-                    {item.text}
-                </Text>
-                <Text className={`
-                    text-xs mt-1 
-                    ${isMe ? 'text-white/70' : 'text-tertiary'}
-                `}>
-                    {item.timestamp}
-                </Text>
-            </View>
-        </View>
-    );
-
-    return (
-        <View className="flex-1 bg-main">
-            <View className="bg-white px-4 py-3 flex-row items-center">
-                <TouchableOpacity
-                    onPress={() => navigation.goBack()}
-                    className="mr-3"
-                >
-                    <MaterialIcons name="arrow-back" size={24} color="#694E4E" />
-                </TouchableOpacity>
-                <View className="bg-secondary/20 p-2 rounded-full mr-3">
-                    <MaterialIcons name="group" size={20} color="#694E4E" />
-                </View>
-                <View className="flex-1">
-                    <Text className="text-brownie font-bold">
-                        {DUMMY_GROUP_CHATS.find(chat => chat.id === chatId)?.name}
-                    </Text>
-                    <Text className="text-tertiary text-xs">
-                        24 members
-                    </Text>
-                </View>
-                <TouchableOpacity>
-                    <MaterialIcons name="more-vert" size={24} color="#694E4E" />
-                </TouchableOpacity>
-            </View>
-
-            <FlatList
-                data={messages}
-                renderItem={({ item }) => (
-                    <MessageBubble
-                        item={item}
-                        isMe={item.user === 'You'}
-                    />
-                )}
-                keyExtractor={item => item.id}
-                contentContainerStyle={{
-                    paddingHorizontal: 16,
-                    paddingVertical: 20
-                }}
-                inverted
-            />
-
-            <View className="bg-white p-3 flex-row items-center">
-                <TouchableOpacity className="mr-2">
-                    <MaterialIcons name="attachment" size={24} color="#694E4E" />
-                </TouchableOpacity>
-                <TextInput
-                    placeholder="Type a message"
-                    placeholderTextColor="#886F6F"
-                    value={message}
-                    onChangeText={setMessage}
-                    className="flex-1 bg-secondary/10 rounded-full px-4 py-2 mr-2 text-brownie"
-                />
-                <TouchableOpacity
-                    onPress={sendMessage}
-                    className="bg-secondary p-2 rounded-full"
-                >
-                    <MaterialIcons name="send" size={24} color="white" />
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-};
-
-export { ChatScreen, GroupChatDetailScreen };
+export default ChatScreen;
