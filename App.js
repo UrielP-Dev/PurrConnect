@@ -12,11 +12,14 @@ import CommunityInfo from "./screens/HomePage/CommunityInfo";
 import CreatePost from "./screens/HomePage/CreatePost";
 import { UserProvider } from './Context/UserContext';
 import MyCommunities from "./screens/HomePage/MyCommunites";
-
+import SettingsDrawer from "./components/ComponentsMenuDrawer/SettingsDrawer"
 import GroupChatDetailScreen from "./screens/HomePage/GroupChatDetailScreen";
 import ChatScreen from "./screens/HomePage/ChatScreen";
 import SignUpScreen from './screens/SignUpScreen';
 import CreateCommunityScreen from "./screens/CreateCommunityScreen";
+import ProfileDrawer from './components/ComponentsMenuDrawer/ProfileDrawer';
+import LogOutDrawer from './components/ComponentsMenuDrawer/LogOutDrawer';
+import { View } from 'lucide-react-native';
 
 
 const Drawer = createDrawerNavigator();
@@ -91,6 +94,7 @@ function AppDrawer() {
                 drawerStyle: {
                     backgroundColor: '#FFFFFF',
                     width: 280,
+                    
                 },
                 drawerActiveTintColor: '#694E4E',
                 drawerInactiveTintColor: '#886F6F',
@@ -107,6 +111,56 @@ function AppDrawer() {
                     ),
                 }}
             />
+            <Drawer.Screen
+                name="Settings"
+                component={SettingsDrawer}
+                options={{
+                    headerShown: false,
+                    drawerLabel: 'Settings',
+                    drawerIcon: ({ color, size }) => (
+                        <MaterialIcons name="settings" color={color} size={size} />
+                    ),
+                }}
+            />
+            <Drawer.Screen
+                name="Profile"
+                component={ProfileDrawer}
+                options={{
+                    headerShown: false,
+                    drawerLabel: 'Profile',
+                    drawerIcon: ({ color, size }) => (
+                        <MaterialIcons name="manage-accounts" color={color} size={size} />
+                    ),
+                }}
+            />
+            <Drawer.Screen
+                name="Create1"
+                component={CreateCommunityScreen}
+                options={{
+                    headerShown: false,
+                    drawerLabel: 'Create Community',
+                    drawerIcon: ({ color, size }) => (
+                        <MaterialIcons name="add" color={color} size={size} />
+                    ),
+                }}
+            />
+            
+            <Drawer.Screen
+                name="LogOut"
+                
+                component={LogOutDrawer}
+                options={{
+                    headerShown: false,
+                    drawerLabel: 'Log Out',
+                    drawerIcon: ({ color, size }) => (
+                        <MaterialIcons name="logout" color={color} size={size} />
+                    ),
+                    
+                }}
+            />
+            
+
+
             {/* Aquí puedes agregar más pantallas al drawer */}
         </Drawer.Navigator>
     );

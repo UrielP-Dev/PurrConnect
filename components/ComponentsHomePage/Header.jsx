@@ -12,7 +12,7 @@ const Header = ({ navigation }) => {
                 <Image
                     source={require('../../assets/PurrConnect.png')}
                     className="w-32 h-8"
-                    resizeMode="contain"
+                    resizeMode="contain" 
                 />
             </View>
             <View className="flex-row items-center space-x-4 mt-4">
