@@ -89,44 +89,69 @@ const HomePage = () => {
 
     const handleJoinPress = async (communityId) => {
         const userCommunityRef = doc(db, "MyCommunities", userId);
+        const communityRef = doc(db, "Communitys", communityId);
 
         try {
             const userCommunityDoc = await getDoc(userCommunityRef);
+            const communityDoc = await getDoc(communityRef);
 
-            if (userCommunityDoc.exists()) {
-                const userCommunitiesFromDB = userCommunityDoc.data().communityIds || [];
-                const isAlreadyJoined = userCommunitiesFromDB.includes(communityId);
+            if (communityDoc.exists()) {
+                const currentParticipants = communityDoc.data().participants || 0;
 
-                if (isAlreadyJoined) {
-                    await updateDoc(userCommunityRef, {
-                        communityIds: arrayRemove(communityId),
-                    });
-                    ToastAndroid.show("You have left the community.", ToastAndroid.SHORT);
+                if (userCommunityDoc.exists()) {
+                    const userCommunitiesFromDB = userCommunityDoc.data().communityIds || [];
+                    const isAlreadyJoined = userCommunitiesFromDB.includes(communityId);
+
+                    if (isAlreadyJoined) {
+                        // Eliminar al usuario de la comunidad
+                        await updateDoc(userCommunityRef, {
+                            communityIds: arrayRemove(communityId),
+                        });
+
+                        await updateDoc(communityRef, {
+                            participants: Math.max(0, currentParticipants - 1),
+                        });
+
+                        ToastAndroid.show("You have left the community.", ToastAndroid.SHORT);
+                    } else {
+                        await updateDoc(userCommunityRef, {
+                            communityIds: arrayUnion(communityId),
+                        });
+
+                        await updateDoc(communityRef, {
+                            participants: currentParticipants + 1,
+                        });
+
+                        ToastAndroid.show("You have joined the community!", ToastAndroid.SHORT);
+                    }
+
+                    setUserCommunities((prev) =>
+                        isAlreadyJoined
+                            ? prev.filter((id) => id !== communityId)
+                            : [...prev, communityId]
+                    );
                 } else {
-                    await updateDoc(userCommunityRef, {
-                        communityIds: arrayUnion(communityId),
+                    await setDoc(userCommunityRef, {
+                        communityIds: [communityId],
                     });
+
+                    await updateDoc(communityRef, {
+                        participants: currentParticipants + 1,
+                    });
+
                     ToastAndroid.show("You have joined the community!", ToastAndroid.SHORT);
+
+                    setUserCommunities((prev) => [...prev, communityId]);
                 }
-
-                setUserCommunities((prev) =>
-                    isAlreadyJoined
-                        ? prev.filter((id) => id !== communityId)
-                        : [...prev, communityId]
-                );
             } else {
-                await setDoc(userCommunityRef, {
-                    communityIds: [communityId],
-                });
-                ToastAndroid.show("You have joined the community!", ToastAndroid.SHORT);
-
-                setUserCommunities((prev) => [...prev, communityId]);
+                ToastAndroid.show("Community does not exist.", ToastAndroid.SHORT);
             }
         } catch (error) {
             console.error("Error updating community membership: ", error);
             ToastAndroid.show("Failed to update community membership", ToastAndroid.SHORT);
         }
     };
+
 
     const handleCommunityPress = (community) => {
         navigation.navigate('CommunityInfo', { communityId: community.id, name: community.name });
