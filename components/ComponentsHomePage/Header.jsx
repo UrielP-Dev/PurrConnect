@@ -16,17 +16,15 @@ const Header = ({ navigation }) => {
                 />
             </View>
             <View className="flex-row items-center space-x-4 mt-4">
-                <Pressable>
-                    <MaterialIcons name="search" size={24} color="#694E4E" />
-                </Pressable>
-                <Pressable className="flex-row items-center bg-brownie px-3 py-1 rounded-full"
+
+                <Pressable className="flex-row items-center bg-brownie px-3 py-1 rounded-full mr-3"
                            onPress={() => navigation.navigate('CreateCommunityScreen')}
                 >
-                    <MaterialIcons name="add" size={30} color="#FFFFFF" />
+                    <MaterialIcons name="add" size={25} color="#FFFFFF" />
                     <Text className="text-white text-sm ml-1">Create</Text>
                 </Pressable>
                 <Pressable>
-                    <MaterialIcons name="account-circle" size={24} color="#694E4E" />
+                    <MaterialIcons name="account-circle" size={30} color="#694E4E" />
                 </Pressable>
             </View>
         </View>

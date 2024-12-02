@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-
+import React, {useContext, useState} from 'react';
 import {
   ScrollView,
   View,
@@ -8,43 +7,14 @@ import {
   TouchableOpacity,
   Alert,
   KeyboardAvoidingView,
-  Platform,
+  Platform, ToastAndroid,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { doc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { UserContext } from '../Context/UserContext';
+import { TOPICS } from '../constants/topics'; // Suggested: Move topics to a separate file
 import SaveButton from '../components/ComponentsForm/SaveButton';
-
-const topics = [
-  { name: 'Anime', emoji: '🍥' },
-  { name: 'Furries', emoji: '🐾' },
-  { name: 'Art', emoji: '🎨' },
-  { name: 'Music', emoji: '🎵' },
-  { name: 'Dance', emoji: '💃' },
-  { name: 'Movies', emoji: '🎬' },
-  { name: 'Games', emoji: '🎮' },
-  { name: 'Photography', emoji: '📷' },
-  { name: 'Travel', emoji: '✈️' },
-  { name: 'Food', emoji: '🍽️' },
-  { name: 'Fitness', emoji: '💪' },
-  { name: 'Technology', emoji: '💻' },
-  { name: 'Fashion', emoji: '👗' },
-  { name: 'Books', emoji: '📚' },
-  { name: 'Cooking', emoji: '👨‍🍳' },
-  { name: 'Sports', emoji: '⚽' },
-  { name: 'Cars', emoji: '🚗' },
-  { name: 'Nature', emoji: '🌿' },
-  { name: 'Space', emoji: '🚀' },
-  { name: 'Science', emoji: '🔬' },
-  { name: 'Comics', emoji: '💥' },
-  { name: 'Cosplay', emoji: '🦸' },
-  { name: 'Writing', emoji: '✍️' },
-  { name: 'Crafts', emoji: '🧶' },
-  { name: 'Philosophy', emoji: '🤔' },
-  { name: 'History', emoji: '🏛️' },
-  { name: 'Psychology', emoji: '🧠' },
-  { name: 'Astronomy', emoji: '🌟' },
-  { name: 'Programming', emoji: '👨‍💻' },
-  { name: 'Pets', emoji: '🐶' }
-];
+import { db } from "../Utils/Firebase";
 
 const CreateCommunityScreen = ({ navigation }) => {
   const [title, setTitle] = useState('');
@@ -52,49 +22,81 @@ const CreateCommunityScreen = ({ navigation }) => {
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showAllTopics, setShowAllTopics] = useState(false);
+  const { userId } = useContext(UserContext);
 
   const toggleTopicSelection = (topic) => {
-    if (selectedTopics.includes(topic.name)) {
-      setSelectedTopics(selectedTopics.filter((t) => t !== topic.name));
-    } else {
-      setSelectedTopics([...selectedTopics, topic.name]);
-    }
+    setSelectedTopics(prevTopics =>
+        prevTopics.includes(topic.name)
+            ? prevTopics.filter(t => t !== topic.name)
+            : [...prevTopics, topic.name]
+    );
   };
 
   const handleSaveCommunity = async () => {
+    // Validate input
     if (!title.trim() || !description.trim() || selectedTopics.length === 0) {
-      Alert.alert('Validation Error', 'Please fill in all fields and select at least one topic.');
+      ToastAndroid.show("Please fill in all fields and select at least one topic.", ToastAndroid.SHORT);
+
       return;
     }
 
     setLoading(true);
     try {
-      Alert.alert('Success', 'Community has been saved!');
-      setTitle('');
-      setDescription('');
-      setSelectedTopics([]);
+      // Create community document
+      const communityRef = doc(db, 'Communitys', title);
+      await setDoc(communityRef, {
+        name: title,
+        description,
+        topics: selectedTopics,
+        participants: 1,
+        userId,
+      });
+
+      // Automatically join the community
+      const userCommunityRef = doc(db, 'MyCommunities', userId);
+      await updateDoc(userCommunityRef, {
+        communityIds: arrayUnion(title),
+      });
+      ToastAndroid.show("Community has been created and you have joined it!", ToastAndroid.SHORT);
+      resetForm();
+      navigation.goBack()
+
     } catch (error) {
-      Alert.alert('Error', 'Failed to save community.');
+      console.error('Error creating community: ', error);
+      ToastAndroid.show("Failed to create community.", ToastAndroid.SHORT);
     } finally {
       setLoading(false);
     }
   };
 
-  const displayedTopics = showAllTopics ? topics : topics.slice(0, Math.ceil(topics.length / 2));
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setSelectedTopics([]);
+  };
+
+  const displayedTopics = showAllTopics
+      ? TOPICS
+      : TOPICS.slice(0, Math.ceil(TOPICS.length / 2));
 
   return (
-      <KeyboardAvoidingView
+      <KeyboardAvoidingView className="mb-18"
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView className="flex-1 bg-main px-6 py-12">
-          <View className="flex-row items-center my-6">
+        <ScrollView
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: 16 }}
+            keyboardShouldPersistTaps="handled"
+            className="bg-main px-6 py-12"
+        >
+          {/* Header */}
+          <View className="flex-row items-center mb-6">
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <MaterialIcons name="arrow-back" size={24} color="#694E4E" />
             </TouchableOpacity>
             <Text className="text-brownie font-bold text-xl ml-4">Create Community</Text>
           </View>
 
+          {/* Title Input */}
           <View className="mb-6">
             <Text className="text-tertiary font-bold text-xl mb-2">Title</Text>
             <TextInput
@@ -105,6 +107,8 @@ const CreateCommunityScreen = ({ navigation }) => {
                 onChangeText={setTitle}
             />
           </View>
+
+          {/* Description Input */}
           <View className="mb-6">
             <Text className="text-tertiary font-bold text-xl mb-2">Description</Text>
             <TextInput
@@ -117,14 +121,18 @@ const CreateCommunityScreen = ({ navigation }) => {
                 textAlignVertical="top"
             />
           </View>
-          <View>
+
+          {/* Topics Selection */}
+          <View className="mb-6">
             <Text className="text-tertiary font-bold text-xl mb-4">Topics of Discussion</Text>
             <View className="flex-row flex-wrap">
               {displayedTopics.map((topic, index) => (
                   <TouchableOpacity
                       key={index}
                       className={`px-4 py-2 rounded-full border flex-row items-center ${
-                          selectedTopics.includes(topic.name) ? 'bg-brownie border-brownie' : 'bg-white border-brownie'
+                          selectedTopics.includes(topic.name)
+                              ? 'bg-brownie border-brownie'
+                              : 'bg-white border-brownie'
                       } m-2 shadow-sm`}
                       onPress={() => toggleTopicSelection(topic)}
                       activeOpacity={0.7}
@@ -140,21 +148,31 @@ const CreateCommunityScreen = ({ navigation }) => {
                   </TouchableOpacity>
               ))}
             </View>
+
+            {/* Show More Topics */}
             {!showAllTopics && (
-                <TouchableOpacity className="items-center mt-4" onPress={() => setShowAllTopics(true)}>
+                <TouchableOpacity
+                    className="items-center mt-4"
+                    onPress={() => setShowAllTopics(true)}
+                >
                   <Text className="text-brownie font-bold">Show More Topics</Text>
                 </TouchableOpacity>
             )}
           </View>
-          <SaveButton
-              onPress={handleSaveCommunity}
-              loading={loading}
-              label="Save Community"
-              className="mt-6"
-          />
+
+          {/* Save Button */}
+          <View className="pb-14">
+            <SaveButton
+                onPress={handleSaveCommunity}
+                loading={loading}
+                label="Save Community"
+                className="mb-16"
+            />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
   );
+
 };
 
 export default CreateCommunityScreen;
