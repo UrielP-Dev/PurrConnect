@@ -25,12 +25,15 @@ export default function LogOutDrawer() {
           onPress={() => navigation.goBack()}>
           <MaterialIcons name="arrow-back" size={24} color="#694E4E" />
         </TouchableOpacity>
+        <Text className="text-brownie font-bold text-2xl ml-4">
+          Profile
+        </Text>
       </View>
 
       <View className="flex-1 bg-main mt-20 mr-10 mb-20 ml-10 rounded-2xl">
         <Image className="h-2/4 w-full" source={require('../../assets/PurrIcon.png')} />
         <Text className="text-[#886F6F] font-bold text-xl mb-2 text-center">
-          ¿Estás seguro de que deseas cerrar sesión?
+          Are you sure you want to log out?
         </Text>
         <TouchableOpacity
           className='w-full py-4 rounded-xl mb-4 flex items-center justify-center bg-[#694E4E]'
@@ -42,7 +45,8 @@ export default function LogOutDrawer() {
           className='w-full py-4 rounded-xl mb-4 flex items-center justify-center bg-[#694E4E]'
           onPress={() => navigation.goBack()}
         >
-          <Text className="text-white text-center font-semibold">Cancelar</Text>
+          <Text className="text-white text-center font-semibold">Cancel
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
