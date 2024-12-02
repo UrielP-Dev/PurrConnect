@@ -13,7 +13,8 @@
       "backgroundColor": "#ffffff"
     },
     "react-native-warnings": {
-      "enabled": false,
+      "enabled": false
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.urielpp.PurrConnect"
