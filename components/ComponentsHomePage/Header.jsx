@@ -19,8 +19,10 @@ const Header = ({ navigation }) => {
                 <Pressable>
                     <MaterialIcons name="search" size={24} color="#694E4E" />
                 </Pressable>
-                <Pressable className="flex-row items-center bg-brownie px-3 py-1 rounded-full">
-                    <MaterialIcons name="add" size={20} color="#FFFFFF" />
+                <Pressable className="flex-row items-center bg-brownie px-3 py-1 rounded-full"
+                           onPress={() => navigation.navigate('CreateCommunityScreen')}
+                >
+                    <MaterialIcons name="add" size={30} color="#FFFFFF" />
                     <Text className="text-white text-sm ml-1">Create</Text>
                 </Pressable>
                 <Pressable>

@@ -12,9 +12,11 @@ import CommunityInfo from "./screens/HomePage/CommunityInfo";
 import CreatePost from "./screens/HomePage/CreatePost";
 import { UserProvider } from './Context/UserContext';
 import MyCommunities from "./screens/HomePage/MyCommunites";
-import { mdiCat } from '@mdi/js';
-import Icon from '@mdi/react';
-import {ChatScreen} from "./screens/HomePage/ChatScreen";
+
+import GroupChatDetailScreen from "./screens/HomePage/GroupChatDetailScreen";
+import ChatScreen from "./screens/HomePage/ChatScreen";
+import SignUpScreen from './screens/SignUpScreen';
+import CreateCommunityScreen from "./screens/CreateCommunityScreen";
 
 
 const Drawer = createDrawerNavigator();
@@ -139,6 +141,21 @@ export default function App() {
                         name="CreatePost"
                         component={CreatePost}
                         options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="GroupChatDetail"
+                        component={GroupChatDetailScreen}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name={"SignUpScreen"}
+                        component={SignUpScreen}
+                        options={{ title: 'SignUpScreen', headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name={"CreateCommunityScreen"}
+                        component={CreateCommunityScreen}
+                        options={{ title: 'SignUpScreen', headerShown: false }}
                     />
 
                 </Stack.Navigator>
