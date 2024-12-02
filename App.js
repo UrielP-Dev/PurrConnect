@@ -134,7 +134,7 @@ function AppDrawer() {
                 }}
             />
             <Drawer.Screen
-                name="Create1"
+                name="Create"
                 component={CreateCommunityScreen}
                 options={{
                     headerShown: false,
@@ -209,7 +209,7 @@ export default function App() {
                     <Stack.Screen
                         name={"CreateCommunityScreen"}
                         component={CreateCommunityScreen}
-                        options={{ title: 'SignUpScreen', headerShown: false }}
+                        options={{ title: 'CreateCommunityScreen', headerShown: false }}
                     />
 
                 </Stack.Navigator>

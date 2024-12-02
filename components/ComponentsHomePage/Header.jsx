@@ -6,7 +6,7 @@ const Header = ({ navigation }) => {
     return (
         <View className="bg-white px-4 py-8 flex-row items-center justify-between shadow-2xl">
             <View className="flex-row items-center mt-4">
-                <Pressable onPress={() => navigation.openDrawer()} className="mr-3">
+                <Pressable  onPress={() => {navigation.openDrawer()}} className="mr-3">
                     <MaterialIcons name="menu" size={36} color="#694E4E" />
                 </Pressable>
                 <Image
