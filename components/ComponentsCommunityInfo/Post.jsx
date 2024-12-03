@@ -1,39 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, Modal, TextInput, Button } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, Modal, TextInput } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import { db } from '../../Utils/Firebase';
-import { doc, updateDoc, increment, getDoc, arrayUnion, setDoc, collection } from "firebase/firestore";
+import { doc, updateDoc, increment, getDoc, arrayUnion } from "firebase/firestore";
+import { auth } from '../../Utils/Firebase'; // Asegúrate de tener configurado auth
 
 const Post = ({ post }) => {
     const [imageModalVisible, setImageModalVisible] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
-    const [userName, setUserName] = useState(null);
+    const [postUserName, setPostUserName] = useState(null); // Para el username del creador del post
+    const [currentUserName, setCurrentUserName] = useState(null); // Para el username del usuario autenticado
     const [newComment, setNewComment] = useState("");
     const navigation = useNavigation();
 
-    // Obtener el nombre de usuario desde Firestore
+    // Obtener el nombre de usuario del creador del post
     useEffect(() => {
-        const fetchUserName = async () => {
+        const fetchPostUserName = async () => {
             try {
                 const userDocRef = doc(db, "users", post.UserID);
                 const userDoc = await getDoc(userDocRef);
 
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
-                    setUserName(userData.userName); // Obtener el campo userName
+                    setPostUserName(userData.userName);
                 } else {
-                    console.warn("Usuario no encontrado.");
+                    console.warn("Usuario creador del post no encontrado.");
                 }
             } catch (error) {
-                console.error("Error al obtener el nombre de usuario:", error);
+                console.error("Error al obtener el nombre de usuario del post:", error);
             }
         };
 
         if (post.UserID) {
-            fetchUserName();
+            fetchPostUserName();
         }
     }, [post.UserID]);
+
+    // Obtener el nombre de usuario autenticado
+    useEffect(() => {
+        const fetchCurrentUserName = async () => {
+            try {
+                const user = auth.currentUser;
+                if (user) {
+                    const userDocRef = doc(db, "users", user.uid); // Obtén el documento del usuario autenticado
+                    const userDoc = await getDoc(userDocRef);
+
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        setCurrentUserName(userData.userName);
+                    } else {
+                        console.warn("Usuario autenticado no encontrado.");
+                    }
+                }
+            } catch (error) {
+                console.error("Error al obtener el nombre del usuario autenticado:", error);
+            }
+        };
+
+        fetchCurrentUserName();
+    }, []);
 
     // Función para manejar el 'like'
     const handleLike = async () => {
@@ -49,32 +75,29 @@ const Post = ({ post }) => {
 
     // Función para manejar el comentario
     const handleSendComment = async () => {
-        if (newComment.trim()) {
+        if (newComment.trim() && currentUserName) {
             try {
-                // Obtener la referencia al post
-                const postRef = doc(db, "Posts", postId);
+                const postRef = doc(db, "Posts", post.id);
 
-                // Agregar el comentario al array de comentarios dentro del post
                 await updateDoc(postRef, {
                     Comments: arrayUnion({
-                        userName: userName, // Nombre de usuario
-                        text: newComment, // El comentario
-                        createdAt: new Date() // Fecha de creación
+                        userName: currentUserName, // Usar el nombre del usuario autenticado
+                        text: newComment.trim(),
+                        createdAt: new Date()
                     })
                 });
 
-                // Limpiar el campo de nuevo comentario
-                setNewComment("");
+                setNewComment(""); // Limpiar el campo
             } catch (error) {
                 console.error("Error al agregar comentario:", error);
             }
         }
     };
+
     const handleImagePress = (image) => {
         setSelectedImage(image);
         setImageModalVisible(true);
     };
-
 
     const formattedDate = new Date(post.createdAt).toLocaleDateString();
     const formattedTime = new Date(post.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -93,7 +116,7 @@ const Post = ({ post }) => {
             <View className="flex-row items-center space-x-2 mb-3">
                 <View className="flex-row items-center">
                     <MaterialIcons name="account-circle" size={18} color="#694E4E" />
-                    <Text className="text-brownie font-medium ml-1">{userName || "Cargando..."}</Text>
+                    <Text className="text-brownie font-medium ml-1">{postUserName || "Cargando..."}</Text>
                 </View>
                 <Text className="text-secondary">•</Text>
                 <Text className="text-secondary text-xs">
@@ -105,11 +128,10 @@ const Post = ({ post }) => {
             {post.ImgDir && post.ImgDir.length > 0 && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
                     {post.ImgDir.map((image, index) => (
-                        <TouchableOpacity key={index} onPress={() => handleImagePress(image)}>  {/* Cambié la función a handleImagePress */}
+                        <TouchableOpacity key={index} onPress={() => handleImagePress(image)}>
                             <Image source={{ uri: image }} className="w-28 h-28 rounded-lg mr-2" />
                         </TouchableOpacity>
                     ))}
-
                 </ScrollView>
             )}
 
@@ -134,8 +156,6 @@ const Post = ({ post }) => {
                 </View>
             </View>
 
-
-
             {/* Comment Input */}
             <View className="bg-white px-4 py-3 flex-row items-center shadow-sm">
                 <TextInput
@@ -149,28 +169,22 @@ const Post = ({ post }) => {
                 <TouchableOpacity
                     onPress={handleSendComment}
                     disabled={!newComment.trim()}
-                    className={`
-                    p-2 rounded-full 
-                    ${newComment.trim() ? 'bg-brownie' : 'bg-gray-300'}
-                `}
+                    className={`p-2 rounded-full ${newComment.trim() ? 'bg-brownie' : 'bg-gray-300'}`}
                 >
-                    <MaterialIcons
-                        name="send"
-                        size={24}
-                        color="white"
-                    />
+                    <MaterialIcons name="send" size={24} color="white" />
                 </TouchableOpacity>
             </View>
+
             {/* Image Modal */}
             {selectedImage && (
                 <Modal
                     visible={imageModalVisible}
                     transparent={true}
-                    onRequestClose={() => setImageModalVisible(false)} // Cerrar modal al presionar "back"
+                    onRequestClose={() => setImageModalVisible(false)}
                 >
                     <View className="flex-1 bg-black/80 items-center justify-center">
                         <TouchableOpacity
-                            onPress={() => setImageModalVisible(false)} // Cerrar modal al hacer clic en el área fuera de la imagen
+                            onPress={() => setImageModalVisible(false)}
                             className="absolute top-10 right-4 z-10"
                         >
                             <MaterialIcons name="close" size={30} color="white" />
