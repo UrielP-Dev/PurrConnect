@@ -20,7 +20,7 @@ const LoginScreen = ({ navigation }) => {
 
     return (
         <ScrollView className="flex-1 bg-main">
-            <View className="flex-1 justify-center items-center px-6 py-12 mt-16">
+            <View className="flex-1  px-6 py-12 mt-16">
                 <Image className="h-80 w-80" source={require('../assets/PurrIcon.png')} />
                 <EmailInput
                     value={email}
