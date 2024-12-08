@@ -3,18 +3,19 @@ import { View, Text, TouchableOpacity, Image, ScrollView, Modal, TextInput } fro
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import { db } from '../../Utils/Firebase';
-import { doc, updateDoc, increment, getDoc, arrayUnion } from "firebase/firestore";
-import { auth } from '../../Utils/Firebase'; // Asegúrate de tener configurado auth
+import { doc, updateDoc, arrayRemove, arrayUnion, getDoc } from "firebase/firestore";
+import { auth } from '../../Utils/Firebase';
 
 const Post = ({ post }) => {
     const [imageModalVisible, setImageModalVisible] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
-    const [postUserName, setPostUserName] = useState(null); // Para el username del creador del post
-    const [currentUserName, setCurrentUserName] = useState(null); // Para el username del usuario autenticado
+    const [postUserName, setPostUserName] = useState(null);
+    const [currentUserName, setCurrentUserName] = useState(null);
     const [newComment, setNewComment] = useState("");
+    const [liked, setLiked] = useState(false);
     const navigation = useNavigation();
 
-    // Obtener el nombre de usuario del creador del post
+    // Fetch post user name
     useEffect(() => {
         const fetchPostUserName = async () => {
             try {
@@ -37,13 +38,13 @@ const Post = ({ post }) => {
         }
     }, [post.UserID]);
 
-    // Obtener el nombre de usuario autenticado
+    // Fetch current user name
     useEffect(() => {
         const fetchCurrentUserName = async () => {
             try {
                 const user = auth.currentUser;
                 if (user) {
-                    const userDocRef = doc(db, "users", user.uid); // Obtén el documento del usuario autenticado
+                    const userDocRef = doc(db, "users", user.uid);
                     const userDoc = await getDoc(userDocRef);
 
                     if (userDoc.exists()) {
@@ -61,19 +62,44 @@ const Post = ({ post }) => {
         fetchCurrentUserName();
     }, []);
 
-    // Función para manejar el 'like'
+    // Improved like functionality
     const handleLike = async () => {
         try {
             const postRef = doc(db, "Posts", post.id);
-            await updateDoc(postRef, {
-                Likes: increment(1),
-            });
+            const user = auth.currentUser;
+
+            if (user) {
+                if (!liked) {
+                    // Add like
+                    await updateDoc(postRef, {
+                        Likes: arrayUnion(user.uid),
+                    });
+                    setLiked(true);
+                } else {
+                    // Remove like
+                    await updateDoc(postRef, {
+                        Likes: arrayRemove(user.uid),
+                    });
+                    setLiked(false);
+                }
+            }
         } catch (error) {
-            console.error("Error al dar like:", error);
+            console.error("Error al manejar like:", error);
         }
     };
 
-    // Función para manejar el comentario
+    // Check if current user has already liked the post
+    useEffect(() => {
+        const checkLikeStatus = () => {
+            const user = auth.currentUser;
+            if (user && post.Likes && Array.isArray(post.Likes)) {
+                setLiked(post.Likes.includes(user.uid));
+            }
+        };
+
+        checkLikeStatus();
+    }, [post.Likes]);
+
     const handleSendComment = async () => {
         if (newComment.trim() && currentUserName) {
             try {
@@ -81,13 +107,13 @@ const Post = ({ post }) => {
 
                 await updateDoc(postRef, {
                     Comments: arrayUnion({
-                        userName: currentUserName, // Usar el nombre del usuario autenticado
+                        userName: currentUserName,
                         text: newComment.trim(),
                         createdAt: new Date()
                     })
                 });
 
-                setNewComment(""); // Limpiar el campo
+                setNewComment(""); // Clear input
             } catch (error) {
                 console.error("Error al agregar comentario:", error);
             }
@@ -136,11 +162,20 @@ const Post = ({ post }) => {
             )}
 
             <View className="flex-row items-center justify-between border-t border-secondary/20 pt-3">
-                {/* Likes Section */}
+                {/* Likes Section - Reddit-style */}
                 <View className="flex-row items-center">
-                    <TouchableOpacity onPress={handleLike} className="flex-row items-center">
-                        <MaterialIcons name="favorite" size={22} color={post.Likes > 0 ? "#694E4E" : "#886F6F"} />
-                        <Text className="ml-1 text-brownie">{post.Likes || 0}</Text>
+                    <TouchableOpacity
+                        onPress={handleLike}
+                        className="flex-row items-center mr-2"
+                    >
+                        <MaterialIcons
+                            name={liked ? "favorite" : "favorite-border"}
+                            size={22}
+                            color={liked ? "#694E4E" : "#886F6F"}
+                        />
+                        <Text className={`ml-1 ${liked ? 'text-brownie font-bold' : 'text-secondary'}`}>
+                            {post.Likes ? (Array.isArray(post.Likes) ? post.Likes.length : post.Likes) : 0}
+                        </Text>
                     </TouchableOpacity>
                 </View>
 
