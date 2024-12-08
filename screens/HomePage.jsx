@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { Text, FlatList, View, ToastAndroid, ActivityIndicator, RefreshControl, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -41,6 +42,17 @@ const HomePage = () => {
             setIsLoading((prev) => ({ ...prev, communities: false }));
         }
     };
+
+
+    useFocusEffect(
+        React.useCallback(() => {
+            const fetchData = async () => {
+                await Promise.all([fetchCommunities(), fetchUserCommunities()]);
+            };
+
+            fetchData();
+        }, [userId])
+    );
 
     // Search functionality
     useEffect(() => {

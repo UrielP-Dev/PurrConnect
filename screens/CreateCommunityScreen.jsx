@@ -10,12 +10,11 @@ import {
   Platform, ToastAndroid,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { doc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { UserContext } from '../Context/UserContext';
 import { TOPICS } from '../constants/topics'; // Suggested: Move topics to a separate file
 import SaveButton from '../components/ComponentsForm/SaveButton';
 import { db } from "../Utils/Firebase";
-
+import { doc, setDoc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 const CreateCommunityScreen = ({ navigation }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -33,16 +32,14 @@ const CreateCommunityScreen = ({ navigation }) => {
   };
 
   const handleSaveCommunity = async () => {
-    // Validate input
     if (!title.trim() || !description.trim() || selectedTopics.length === 0) {
       ToastAndroid.show("Please fill in all fields and select at least one topic.", ToastAndroid.SHORT);
-
       return;
     }
 
     setLoading(true);
     try {
-      // Create community document
+      // Crear documento de comunidad
       const communityRef = doc(db, 'Communitys', title);
       await setDoc(communityRef, {
         name: title,
@@ -52,15 +49,21 @@ const CreateCommunityScreen = ({ navigation }) => {
         userId,
       });
 
-      // Automatically join the community
+      // Verificar y crear documento en MyCommunities si no existe
       const userCommunityRef = doc(db, 'MyCommunities', userId);
-      await updateDoc(userCommunityRef, {
-        communityIds: arrayUnion(title),
-      });
+      const userCommunitySnap = await getDoc(userCommunityRef);
+
+      if (!userCommunitySnap.exists()) {
+        await setDoc(userCommunityRef, { communityIds: [title] });
+      } else {
+        await updateDoc(userCommunityRef, {
+          communityIds: arrayUnion(title),
+        });
+      }
+
       ToastAndroid.show("Community has been created and you have joined it!", ToastAndroid.SHORT);
       resetForm();
-      navigation.goBack()
-
+      navigation.goBack();
     } catch (error) {
       console.error('Error creating community: ', error);
       ToastAndroid.show("Failed to create community.", ToastAndroid.SHORT);

@@ -99,7 +99,7 @@ const CommunityInfo = ({ route }) => {
     return (
         <View className="flex-1 bg-main">
             {/* Header */}
-            <View className="bg-white px-4 py-4 flex-row items-center shadow-sm">
+            <View className="bg-white px-4 pb-4 pt-12 flex-row items-center shadow-sm">
                 <TouchableOpacity
                     onPress={() => navigation.goBack()}
                     className="mr-4"

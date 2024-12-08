@@ -166,7 +166,6 @@ function AppDrawer() {
 
 
 
-            {/* Aquí puedes agregar más pantallas al drawer */}
         </Drawer.Navigator>
     );
 }

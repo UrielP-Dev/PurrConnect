@@ -41,7 +41,6 @@ const ChatScreen = () => {
         }
     };
 
-    // Fetch chats from Communitys using community IDs
     const fetchChats = async () => {
         try {
             if (userCommunities.length === 0) {
